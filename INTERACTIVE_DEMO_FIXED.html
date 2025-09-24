@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clinical Research Pipeline Demo</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #262730;
+            background-color: #ffffff;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        
+        .main-header {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #1f77b4;
+            text-align: center;
+            margin: 2rem 0;
+        }
+        
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background-color: #f0f2f6;
+            padding: 1rem;
+            overflow-y: auto;
+            border-right: 1px solid #e6eaf1;
+        }
+        
+        .sidebar h3 {
+            color: #1f77b4;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        .sidebar-nav {
+            list-style: none;
+        }
+        
+        .sidebar-nav li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .sidebar-nav button {
+            width: 100%;
+            text-align: left;
+            padding: 0.5rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            border-radius: 0.25rem;
+            transition: background-color 0.2s;
+        }
+        
+        .sidebar-nav button:hover {
+            background-color: #e6eaf1;
+        }
+        
+        .sidebar-nav button.active {
+            background-color: #1f77b4;
+            color: white;
+        }
+        
+        .main-content {
+            margin-left: 270px;
+            padding: 1rem;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .pipeline-steps {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .pipeline-step {
+            background-color: #f0f2f6;
+            padding: 1rem;
+            border-radius: 10px;
+            border-left: 4px solid #1f77b4;
+        }
+        
+        .pipeline-step h4 {
+            color: #262730;
+            margin-bottom: 0.5rem;
+        }
+        
+        .pipeline-step p {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        
+        .agent-status {
+            background-color: #e8f5e8;
+            padding: 0.5rem;
+            border-radius: 5px;
+            color: #2e8b57;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+        
+        .optional-step {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .optional-step .agent-status {
+            background-color: #ffc107;
+            color: #333;
+        }
+        
+        .metrics-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .metric-card {
+            background-color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+            border: 1px solid #e6eaf1;
+        }
+        
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #1f77b4;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .metric-delta {
+            font-size: 0.8rem;
+            color: #28a745;
+            margin-top: 0.25rem;
+        }
+        
+        .chart-container {
+            background-color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 1rem 0;
+            border: 1px solid #e6eaf1;
+        }
+        
+        .interactive-builder {
+            background-color: #f8f9fa;
+            padding: 2rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        
+        .builder-tabs {
+            display: flex;
+            margin-bottom: 2rem;
+            background-color: white;
+            border-radius: 8px;
+            padding: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .builder-tab {
+            flex: 1;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: none;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        
+        .builder-tab.active {
+            background-color: #1f77b4;
+            color: white;
+        }
+        
+        .builder-tab:hover {
+            background-color: #e6eaf1;
+        }
+        
+        .builder-tab.active:hover {
+            background-color: #1f77b4;
+        }
+        
+        .builder-content {
+            display: none;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .builder-content.active {
+            display: block;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .command-output {
+            background-color: #2d3748;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: 'Courier New', Monaco, monospace;
+            margin: 1rem 0;
+            position: relative;
+            overflow-x: auto;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: #4a5568;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        
+        .copy-btn:hover {
+            background-color: #2d3748;
+        }
+        
+        .run-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+        
+        .run-btn:hover {
+            background-color: #218838;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .feature-card {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border: 1px solid #e6eaf1;
+        }
+        
+        .feature-card h4 {
+            color: #1f77b4;
+            margin-bottom: 1rem;
+        }
+        
+        .feature-card ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .feature-card li {
+            padding: 0.25rem 0;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .feature-card li::before {
+            content: "• ";
+            color: #1f77b4;
+            font-weight: bold;
+        }
+        
+        .info-box {
+            background-color: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 0.25rem;
+            padding: 1rem;
+            margin: 1rem 0;
+            color: #1565c0;
+        }
+        
+        .qa-samples {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .qa-card {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid #1f77b4;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .qa-question {
+            font-weight: 600;
+            color: #1f77b4;
+            margin-bottom: 1rem;
+        }
+        
+        .qa-answer {
+            color: #333;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        
+        .qa-explanation {
+            color: #666;
+            font-style: italic;
+            border-top: 1px solid #eee;
+            padding-top: 1rem;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 2rem 0;
+            color: #666;
+            border-top: 1px solid #e6eaf1;
+            margin-top: 3rem;
+            background-color: #f8f9fa;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .pipeline-steps {
+                grid-template-columns: 1fr;
+            }
+            .metrics-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h3>Clinical Research Pipeline</h3>
+        <ul class="sidebar-nav">
+            <li><button class="active" onclick="showTab('overview')">Pipeline Overview</button></li>
+            <li><button onclick="showTab('integration')">Agent Integration</button></li>
+            <li><button onclick="showTab('commands')">Interactive Commands</button></li>
+            <li><button onclick="showTab('journal')">Journal Analysis</button></li>
+            <li><button onclick="showTab('knowledge')">Knowledge Base</button></li>
+        </ul>
+        
+        <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e6eaf1;">
+            <h4 style="color: #1f77b4; margin-bottom: 1rem;">Quick Stats</h4>
+            <div style="margin-bottom: 0.5rem;">
+                <strong>Total Papers:</strong> 2,847
+            </div>
+            <div style="margin-bottom: 0.5rem;">
+                <strong>Relevant Papers:</strong> 1,203
+            </div>
+            <div style="margin-bottom: 0.5rem;">
+                <strong>Extracted Records:</strong> 1,203
+            </div>
+            <div style="margin-bottom: 0.5rem;">
+                <strong>QA Pairs:</strong> 4,290
+            </div>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <div class="main-header">Clinical Research Knowledge Base Pipeline</div>
+        
+        <div id="overview" class="tab-content active">
+            <div class="pipeline-steps">
+                <div class="pipeline-step">
+                    <h4>Step 1: Retrieve</h4>
+                    <p>Agent retrieves papers from PubMed using intelligent keyword matching</p>
+                    <div class="agent-status">Retrieval Agent</div>
+                </div>
+                <div class="pipeline-step">
+                    <h4>Step 2: Classify</h4>
+                    <p>AI agent filters relevant depression/anxiety research</p>
+                    <div class="agent-status">Classification Agent</div>
+                </div>
+                <div class="pipeline-step">
+                    <h4>Step 3: Extract</h4>
+                    <p>Schema extraction agent identifies key clinical data</p>
+                    <div class="agent-status">Extraction Agent</div>
+                </div>
+                <div class="pipeline-step optional-step">
+                    <h4>Optional Steps</h4>
+                    <p><strong>3b:</strong> Field splitting<br><strong>4:</strong> QA generation</p>
+                    <div class="agent-status">Optional Agents</div>
+                </div>
+            </div>
+            
+            <div class="metrics-container">
+                <div class="metric-card">
+                    <div class="metric-value">2,847</div>
+                    <div class="metric-label">Papers Retrieved</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">1,203</div>
+                    <div class="metric-label">Relevant Papers</div>
+                    <div class="metric-delta">42.2% pass rate</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">1,203</div>
+                    <div class="metric-label">Data Extracted</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">634</div>
+                    <div class="metric-label">Fields Split</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">4,290</div>
+                    <div class="metric-label">QA Pairs</div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <h3>Agent Pipeline Data Flow</h3>
+                <div id="flowChart" style="height: 400px;"></div>
+            </div>
+        </div>
+        
+        <div id="integration" class="tab-content">
+            <div class="info-box">
+                This pipeline is designed as an <strong>exportable agent</strong> for integration with other AI systems.
+            </div>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>Integration Workflow</h4>
+                    <ul>
+                        <li><strong>Assignment 3 Agent</strong> (this pipeline):</li>
+                        <li>Retrieves papers from PubMed</li>
+                        <li>Filters for clinical relevance</li>
+                        <li>Extracts structured clinical data</li>
+                        <li>Outputs: step3_extracted.csv</li>
+                        <li><strong>Assignment 4 Agent</strong> (population analysis):</li>
+                        <li>Imports Assignment 3 clinical data</li>
+                        <li>Performs population-stratum analysis</li>
+                        <li>Uses clinical data for advanced analytics</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>Key Integration Point</h4>
+                    <div style="background-color: #e3f2fd; padding: 1rem; border-radius: 6px; margin: 1rem 0;">
+                        The <code>step3_extracted.csv</code> output becomes the input data for Assignment 4 population analysis.
+                    </div>
+                    <p><strong>Data Format - Exported data contains:</strong></p>
+                    <ul>
+                        <li><code>pmid</code> - Paper identifier</li>
+                        <li><code>title</code> - Paper title</li>
+                        <li><code>abstract</code> - Paper abstract</li>
+                        <li><code>population</code> - Study population</li>
+                        <li><code>risk_factors</code> - Risk factors identified</li>
+                        <li><code>treatments</code> - Treatment methods</li>
+                        <li><code>outcomes</code> - Clinical outcomes</li>
+                        <li><code>symptoms</code> - Symptoms described</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <h4>Integration Code Example</h4>
+            <div class="command-output">
+                <button class="copy-btn" onclick="copyCommand(this)">Copy</button>
+from export_agent import ClinicalResearchAgent
+
+# Initialize the agent
+agent = ClinicalResearchAgent()
+
+# Run core pipeline (outputs clinical data)
+result = agent.run_core_pipeline(
+    keywords="bipolar disorder",
+    start_year=2022,
+    end_year=2024,
+    sample_per_year=50
+)
+
+# Get extracted clinical data for other agents
+clinical_data = agent.get_extracted_data()
+print(f"Retrieved {len(clinical_data)} clinical records")
+            </div>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>Available Methods</h4>
+                    <ul>
+                        <li><code>run_core_pipeline()</code> - Run 3 essential steps</li>
+                        <li><code>run_full_pipeline()</code> - Run all 5 steps</li>
+                        <li><code>get_extracted_data()</code> - Get clinical data</li>
+                        <li><code>get_qa_bank()</code> - Get Q&A knowledge base</li>
+                        <li><code>export_data_for_agent()</code> - Export formats</li>
+                        <li><code>get_pipeline_status()</code> - Check outputs</li>
+                        <li><code>get_summary_stats()</code> - Get statistics</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>Integration Benefits</h4>
+                    <ul>
+                        <li><strong>Reusability:</strong> Single agent, multiple consumers</li>
+                        <li><strong>Standardization:</strong> Consistent data output</li>
+                        <li><strong>Flexibility:</strong> Multiple export formats</li>
+                        <li><strong>Configuration:</strong> Customizable parameters</li>
+                        <li><strong>Control:</strong> Optional step management</li>
+                        <li><strong>Scalability:</strong> Programmatic execution</li>
+                        <li><strong>Integration:</strong> API integration ready</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div id="commands" class="tab-content">
+            <div class="interactive-builder">
+                <h3>Interactive Command Builder</h3>
+                <p>Customize your pipeline parameters and generate the command to run:</p>
+                
+                <div class="builder-tabs">
+                    <button class="builder-tab active" onclick="showBuilderTab('core')">Core Pipeline</button>
+                    <button class="builder-tab" onclick="showBuilderTab('full')">Full Pipeline</button>
+                    <button class="builder-tab" onclick="showBuilderTab('individual')">Individual Steps</button>
+                </div>
+                
+                <div id="core" class="builder-content active">
+                    <h4>Build your core pipeline command (3 essential steps)</h4>
+                    <div class="form-grid">
+                        <div>
+                            <div class="form-group">
+                                <label for="keywords_core">Research Keywords:</label>
+                                <input type="text" id="keywords_core" value="depression OR anxiety" onchange="updateCoreCommand()">
+                            </div>
+                            <div class="form-group">
+                                <label for="start_year_core">Start Year:</label>
+                                <input type="number" id="start_year_core" value="2020" min="2020" max="2024" onchange="updateCoreCommand()">
+                            </div>
+                            <div class="form-group">
+                                <label for="end_year_core">End Year:</label>
+                                <input type="number" id="end_year_core" value="2024" min="2020" max="2024" onchange="updateCoreCommand()">
+                            </div>
+                        </div>
+                        <div>
+                            <div class="form-group">
+                                <label for="sample_per_year_core">Samples per Year:</label>
+                                <input type="number" id="sample_per_year_core" value="100" min="10" max="500" onchange="updateCoreCommand()">
+                            </div>
+                            <div class="form-group">
+                                <label for="start_from_core">Start From Step:</label>
+                                <select id="start_from_core" onchange="updateCoreCommand()">
+                                    <option value="retrieve">retrieve</option>
+                                    <option value="classify">classify</option>
+                                    <option value="extract">extract</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="command-output">
+                        <button class="copy-btn" onclick="copyCommand(this)">Copy</button>
+                        <div id="core_command">python run.py core --keywords "depression OR anxiety" --start-year 2020 --end-year 2024 --sample-per-year 100</div>
+                    </div>
+                    
+                    <button class="run-btn" onclick="copyCommand(document.querySelector('#core_command').parentElement.querySelector('.copy-btn'))">Copy Core Command</button>
+                </div>
+                
+                <div id="full" class="builder-content">
+                    <h4>Build your full pipeline command (all 5 steps with options)</h4>
+                    <div class="form-grid">
+                        <div>
+                            <div class="form-group">
+                                <label for="keywords_full">Research Keywords:</label>
+                                <input type="text" id="keywords_full" value="depression OR anxiety" onchange="updateFullCommand()">
+                            </div>
+                            <div class="form-group">
+                                <label for="start_year_full">Start Year:</label>
+                                <input type="number" id="start_year_full" value="2020" min="2020" max="2024" onchange="updateFullCommand()">
+                            </div>
+                            <div class="form-group">
+                                <label for="end_year_full">End Year:</label>
+                                <input type="number" id="end_year_full" value="2024" min="2020" max="2024" onchange="updateFullCommand()">
+                            </div>
+                            <div class="form-group">
+                                <label for="sample_per_year_full">Samples per Year:</label>
+                                <input type="number" id="sample_per_year_full" value="100" min="10" max="500" onchange="updateFullCommand()">
+                            </div>
+                        </div>
+                        <div>
+                            <div class="form-group">
+                                <label for="start_from_full">Start From Step:</label>
+                                <select id="start_from_full" onchange="updateFullCommand()">
+                                    <option value="retrieve">retrieve</option>
+                                    <option value="classify">classify</option>
+                                    <option value="extract">extract</option>
+                                </select>
+                            </div>
+                            <div class="checkbox-group">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="skip_split" onchange="updateFullCommand()">
+                                    <label for="skip_split">Skip Split Step (3b)</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="skip_qa" onchange="updateFullCommand()">
+                                    <label for="skip_qa">Skip QA Step (4)</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="command-output">
+                        <button class="copy-btn" onclick="copyCommand(this)">Copy</button>
+                        <div id="full_command">python run.py pipeline --keywords "depression OR anxiety" --start-year 2020 --end-year 2024 --sample-per-year 100</div>
+                    </div>
+                    
+                    <button class="run-btn" onclick="copyCommand(document.querySelector('#full_command').parentElement.querySelector('.copy-btn'))">Copy Full Command</button>
+                </div>
+                
+                <div id="individual" class="builder-content">
+                    <h4>Run individual pipeline steps</h4>
+                    
+                    <div class="form-group">
+                        <label for="step_choice">Choose Step:</label>
+                        <select id="step_choice" onchange="updateIndividualStep()">
+                            <option value="retrieve">retrieve - Get papers from PubMed</option>
+                            <option value="classify">classify - Filter relevant papers</option>
+                            <option value="extract">extract - Extract clinical data</option>
+                            <option value="split">split - Split structured fields (optional)</option>
+                            <option value="qa">qa - Generate Q&A pairs (optional)</option>
+                        </select>
+                    </div>
+                    
+                    <div id="individual_form">
+                        <!-- Dynamic form content based on selected step -->
+                    </div>
+                    
+                    <div class="command-output">
+                        <button class="copy-btn" onclick="copyCommand(this)">Copy</button>
+                        <div id="individual_command">python run.py retrieve --keywords "depression OR anxiety" --start-year 2020 --end-year 2024 --sample-per-year 100</div>
+                    </div>
+                    
+                    <button class="run-btn" onclick="copyCommand(document.querySelector('#individual_command').parentElement.querySelector('.copy-btn'))">Copy Individual Command</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="journal" class="tab-content">
+            <div class="chart-container">
+                <h3>Top Medical Journals in Dataset (Color = Impact Factor)</h3>
+                <div id="journalChart" style="height: 500px;"></div>
+                <p style="color: #666; font-size: 0.9rem; margin-top: 1rem;">
+                    Colors represent approximate impact factors: Red = High impact, Yellow = Medium impact, Blue = Lower impact
+                </p>
+            </div>
+        </div>
+        
+        <div id="knowledge" class="tab-content">
+            <h3>AI-Generated Knowledge Base</h3>
+            <p>Sample Q&A Pairs Generated by AI Agent:</p>
+            
+            <div class="qa-samples">
+                <div class="qa-card">
+                    <div class="qa-question">Q: What are the primary risk factors for clinical depression in adolescents?</div>
+                    <div class="qa-answer">Key risk factors include family history of depression, chronic medical conditions, substance abuse, social isolation, academic stress, and traumatic life events.</div>
+                    <div class="qa-explanation">Research shows that adolescents with multiple risk factors have significantly higher rates of developing clinical depression, with family history and traumatic events being the strongest predictors.</div>
+                </div>
+                
+                <div class="qa-card">
+                    <div class="qa-question">Q: How effective are SSRIs in treating generalized anxiety disorder?</div>
+                    <div class="qa-answer">SSRIs demonstrate 60-70% response rates in treating generalized anxiety disorder, with sertraline and escitalopram showing particularly strong efficacy profiles.</div>
+                    <div class="qa-explanation">Meta-analyses indicate that SSRIs are first-line treatments with manageable side effect profiles, though individual response varies significantly across patients.</div>
+                </div>
+                
+                <div class="qa-card">
+                    <div class="qa-question">Q: What cognitive behavioral therapy techniques are most effective for depression?</div>
+                    <div class="qa-answer">Behavioral activation, cognitive restructuring, and problem-solving therapy show the strongest evidence base for treating depression.</div>
+                    <div class="qa-explanation">Studies indicate that structured CBT protocols with homework assignments and thought records achieve superior outcomes compared to unstructured approaches, with effect sizes of 0.7-0.9.</div>
+                </div>
+                
+                <div class="qa-card">
+                    <div class="qa-question">Q: What are the most common comorbidities with major depressive disorder?</div>
+                    <div class="qa-answer">Anxiety disorders (60-70%), substance use disorders (40-50%), and chronic pain conditions (30-40%) are the most frequent comorbidities.</div>
+                    <div class="qa-explanation">Clinical data shows that comorbid conditions significantly impact treatment outcomes and require integrated care approaches for optimal results.</div>
+                </div>
+                
+                <div class="qa-card">
+                    <div class="qa-question">Q: How do treatment outcomes differ across demographic groups?</div>
+                    <div class="qa-answer">Response rates vary significantly by age, gender, and ethnicity, with older adults showing lower initial response rates but better long-term outcomes.</div>
+                    <div class="qa-explanation">Population-based studies reveal that cultural factors, socioeconomic status, and access to care play crucial roles in treatment effectiveness and adherence patterns.</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <div style="text-align: center; color: #666;">
+                Powered by Multi-Agent AI Pipeline | Clinical Depression & Anxiety Research<br>
+                <strong>Flexible Architecture:</strong> Core + Optional Agents | User-Configurable Steps
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function showTab(tabName) {
+            // Hide all tab contents
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+            
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.sidebar-nav button');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+            
+            // Load charts for specific tabs
+            if (tabName === 'overview') {
+                setTimeout(() => createFlowChart(), 100);
+            } else if (tabName === 'journal') {
+                setTimeout(() => createJournalChart(), 100);
+            }
+        }
+        
+        function showBuilderTab(tabName) {
+            // Hide all builder contents
+            const contents = document.querySelectorAll('.builder-content');
+            contents.forEach(content => content.classList.remove('active'));
+            
+            // Remove active class from all builder tabs
+            const tabs = document.querySelectorAll('.builder-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected builder content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+            
+            // Initialize individual step form if needed
+            if (tabName === 'individual') {
+                updateIndividualStep();
+            }
+        }
+        
+        function updateCoreCommand() {
+            const keywords = document.getElementById('keywords_core').value;
+            const startYear = document.getElementById('start_year_core').value;
+            const endYear = document.getElementById('end_year_core').value;
+            const samplePerYear = document.getElementById('sample_per_year_core').value;
+            const startFrom = document.getElementById('start_from_core').value;
+            
+            let cmd = `python run.py core --keywords "${keywords}" --start-year ${startYear} --end-year ${endYear} --sample-per-year ${samplePerYear}`;
+            if (startFrom !== 'retrieve') {
+                cmd += ` --start-from ${startFrom}`;
+            }
+            
+            document.getElementById('core_command').textContent = cmd;
+        }
+        
+        function updateFullCommand() {
+            const keywords = document.getElementById('keywords_full').value;
+            const startYear = document.getElementById('start_year_full').value;
+            const endYear = document.getElementById('end_year_full').value;
+            const samplePerYear = document.getElementById('sample_per_year_full').value;
+            const startFrom = document.getElementById('start_from_full').value;
+            const skipSplit = document.getElementById('skip_split').checked;
+            const skipQa = document.getElementById('skip_qa').checked;
+            
+            let cmd = `python run.py pipeline --keywords "${keywords}" --start-year ${startYear} --end-year ${endYear} --sample-per-year ${samplePerYear}`;
+            if (startFrom !== 'retrieve') {
+                cmd += ` --start-from ${startFrom}`;
+            }
+            if (skipSplit) {
+                cmd += ' --skip-split';
+            }
+            if (skipQa) {
+                cmd += ' --skip-qa';
+            }
+            
+            document.getElementById('full_command').textContent = cmd;
+        }
+        
+        function updateIndividualStep() {
+            const step = document.getElementById('step_choice').value;
+            const formDiv = document.getElementById('individual_form');
+            
+            if (step === 'retrieve') {
+                formDiv.innerHTML = `
+                    <div class="form-grid">
+                        <div>
+                            <div class="form-group">
+                                <label for="indiv_keywords">Research Keywords:</label>
+                                <input type="text" id="indiv_keywords" value="depression OR anxiety" onchange="updateIndividualCommand()">
+                            </div>
+                            <div class="form-group">
+                                <label for="indiv_start_year">Start Year:</label>
+                                <input type="number" id="indiv_start_year" value="2020" min="2020" max="2024" onchange="updateIndividualCommand()">
+                            </div>
+                        </div>
+                        <div>
+                            <div class="form-group">
+                                <label for="indiv_end_year">End Year:</label>
+                                <input type="number" id="indiv_end_year" value="2024" min="2020" max="2024" onchange="updateIndividualCommand()">
+                            </div>
+                            <div class="form-group">
+                                <label for="indiv_sample_per_year">Samples per Year:</label>
+                                <input type="number" id="indiv_sample_per_year" value="100" min="10" max="500" onchange="updateIndividualCommand()">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                const inputDefaults = {
+                    'classify': 'outputs/step1_retrieved.csv',
+                    'extract': 'outputs/step2_filtered.csv',
+                    'split': 'outputs/step3_extracted.csv',
+                    'qa': 'outputs/step3_extracted.csv'
+                };
+                
+                const outputDefaults = {
+                    'classify': 'outputs/step2_filtered.csv',
+                    'extract': 'outputs/step3_extracted.csv',
+                    'split': 'outputs/step3_split.csv',
+                    'qa': 'outputs/step4_qa.csv'
+                };
+                
+                let extraFields = '';
+                if (step === 'qa') {
+                    extraFields = `
+                        <div class="form-group">
+                            <label for="indiv_qa_bank">QA Bank File:</label>
+                            <input type="text" id="indiv_qa_bank" value="outputs/qa_bank.csv" onchange="updateIndividualCommand()">
+                        </div>
+                    `;
+                }
+                
+                formDiv.innerHTML = `
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="indiv_input">Input CSV File:</label>
+                            <input type="text" id="indiv_input" value="${inputDefaults[step]}" onchange="updateIndividualCommand()">
+                        </div>
+                        <div class="form-group">
+                            <label for="indiv_output">Output File:</label>
+                            <input type="text" id="indiv_output" value="${outputDefaults[step]}" onchange="updateIndividualCommand()">
+                        </div>
+                        ${extraFields}
+                    </div>
+                `;
+            }
+            
+            updateIndividualCommand();
+        }
+        
+        function updateIndividualCommand() {
+            const step = document.getElementById('step_choice').value;
+            let cmd;
+            
+            if (step === 'retrieve') {
+                const keywords = document.getElementById('indiv_keywords').value;
+                const startYear = document.getElementById('indiv_start_year').value;
+                const endYear = document.getElementById('indiv_end_year').value;
+                const samplePerYear = document.getElementById('indiv_sample_per_year').value;
+                cmd = `python run.py retrieve --keywords "${keywords}" --start-year ${startYear} --end-year ${endYear} --sample-per-year ${samplePerYear}`;
+            } else {
+                const inputFile = document.getElementById('indiv_input').value;
+                const outputFile = document.getElementById('indiv_output').value;
+                cmd = `python run.py ${step} --input ${inputFile} --out ${outputFile}`;
+                
+                if (step === 'qa') {
+                    const qaBankElement = document.getElementById('indiv_qa_bank');
+                    if (qaBankElement) {
+                        cmd += ` --qa-bank ${qaBankElement.value}`;
+                    }
+                }
+            }
+            
+            document.getElementById('individual_command').textContent = cmd;
+        }
+        
+        function copyCommand(button) {
+            const commandBlock = button.parentElement;
+            const commandDiv = commandBlock.querySelector('[id$="_command"]') || commandBlock.querySelector('div');
+            const text = commandDiv.textContent.trim();
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                setTimeout(() => button.textContent = originalText, 2000);
+            });
+        }
+        
+        function createFlowChart() {
+            const data = [{
+                type: "funnel",
+                y: ["Retrieved", "Filtered", "Extracted", "Split (Optional)", "QA Generated (Optional)"],
+                x: [2847, 1203, 1203, 634, 290],
+                textinfo: "value+percent initial",
+                marker: {
+                    color: ["#1f77b4", "#ff7f0e", "#2ca02c", "#ffc107", "#d62728"]
+                },
+                connector: {
+                    line: {
+                        color: "royalblue",
+                        dash: "dot",
+                        width: 3
+                    }
+                }
+            }];
+            
+            const layout = {
+                title: "",
+                font: {size: 14},
+                margin: {t: 20, b: 50, l: 100, r: 100}
+            };
+            
+            Plotly.newPlot('flowChart', data, layout, {responsive: true});
+        }
+        
+        function createJournalChart() {
+            const journals = [
+                'Nature Medicine',
+                'JAMA Psychiatry', 
+                'Biological Psychiatry',
+                'American Journal of Psychiatry',
+                'Journal of Affective Disorders',
+                'Depression and Anxiety',
+                'Psychological Medicine',
+                'Journal of Clinical Psychiatry',
+                'Lancet Psychiatry',
+                'PLOS ONE'
+            ];
+            const papers = [89, 67, 54, 43, 38, 35, 29, 27, 24, 22];
+            const impact_factors = [87.2, 19.2, 13.6, 19.2, 6.5, 6.4, 5.9, 4.2, 30.8, 3.7];
+            
+            const data = [{
+                x: papers,
+                y: journals,
+                type: 'bar',
+                orientation: 'h',
+                marker: {
+                    color: impact_factors,
+                    colorscale: 'RdYlBu_r',
+                    colorbar: {
+                        title: 'Impact Factor'
+                    }
+                },
+                hovertemplate: '<b>%{y}</b><br>Papers: %{x}<br>Impact Factor: %{marker.color:.1f}<extra></extra>'
+            }];
+            
+            const layout = {
+                title: "",
+                xaxis: {title: 'Number of Papers'},
+                yaxis: {title: 'Journal'},
+                margin: {t: 20, b: 50, l: 200, r: 100}
+            };
+            
+            Plotly.newPlot('journalChart', data, layout, {responsive: true});
+        }
+        
+        // Initialize default charts
+        document.addEventListener('DOMContentLoaded', function() {
+            createFlowChart();
+            updateCoreCommand();
+            updateFullCommand();
+            updateIndividualStep();
+        });
+    </script>
+</body>
+</html>
